@@ -23,6 +23,7 @@
 #endif
 
 #include "mpp_common.h"
+#include "mpp_platform.h"
 #include "vpu.h"
 #include "mpp_hal.h"
 #include "mpp_env.h"
@@ -42,15 +43,22 @@ MPP_RET hal_h264e_init(void *hal, MppHalCfg *cfg)
     MppEncH264VuiCfg *vui = &h264->vui;
     MppEncH264RefCfg *ref = &h264->ref;
     H264eHwCfg *hw_cfg = &ctx->hw_cfg;
+    VpuHardMode hard_mode = MODE_NULL;
+    RK_U32 hw_flag = 0;
 
     mpp_env_get_u32("h264e_hal_debug", &h264e_hal_log_mode, 0x00000001);
-    if (!access("/dev/rkvenc", F_OK))
-        cfg->device_id = HAL_RKVENC;
-    else
-        cfg->device_id = HAL_VEPU;
 
-    switch (cfg->device_id) {
-    case HAL_VEPU:
+    hw_flag = mpp_get_vcodec_hw_flag();
+    if (hw_flag & HAVE_VPU1)
+        hard_mode = VDPU1_MODE;
+    if (hw_flag & HAVE_VPU2)
+        hard_mode = VDPU2_MODE;
+    /* RKVENC has the highest priority for H.264 encoder */
+    if (hw_flag & HAVE_RKVENC)
+        hard_mode = RKVENC_MODE;
+
+    switch (hard_mode) {
+    case VDPU2_MODE:
         api->init    = hal_h264e_vpu_init;
         api->deinit  = hal_h264e_vpu_deinit;
         api->reg_gen = hal_h264e_vpu_gen_regs;
@@ -61,7 +69,7 @@ MPP_RET hal_h264e_init(void *hal, MppHalCfg *cfg)
         api->control = hal_h264e_vpu_control;
         hw_cfg->hw_type = H264E_VPU;
         break;
-    case HAL_RKVENC:
+    case RKVENC_MODE:
         api->init    = hal_h264e_rkv_init;
         api->deinit  = hal_h264e_rkv_deinit;
         api->reg_gen = hal_h264e_rkv_gen_regs;
@@ -73,7 +81,7 @@ MPP_RET hal_h264e_init(void *hal, MppHalCfg *cfg)
         hw_cfg->hw_type = H264E_RKV;
         break;
     default:
-        mpp_err("invalid device_id: %d", cfg->device_id);
+        mpp_err("invalid device: %d", hard_mode);
         return MPP_NOK;
     }
 
