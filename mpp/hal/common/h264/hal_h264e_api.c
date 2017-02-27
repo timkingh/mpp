@@ -59,14 +59,14 @@ MPP_RET hal_h264e_init(void *hal, MppHalCfg *cfg)
 
     switch (hard_mode) {
     case VDPU2_MODE:
-        api->init    = hal_h264e_vpu_init;
-        api->deinit  = hal_h264e_vpu_deinit;
-        api->reg_gen = hal_h264e_vpu_gen_regs;
-        api->start   = hal_h264e_vpu_start;
-        api->wait    = hal_h264e_vpu_wait;
-        api->reset   = hal_h264e_vpu_reset;
-        api->flush   = hal_h264e_vpu_flush;
-        api->control = hal_h264e_vpu_control;
+        api->init    = hal_h264e_vepu2_init;
+        api->deinit  = hal_h264e_vepu2_deinit;
+        api->reg_gen = hal_h264e_vepu2_gen_regs;
+        api->start   = hal_h264e_vepu2_start;
+        api->wait    = hal_h264e_vepu2_wait;
+        api->reset   = hal_h264e_vepu2_reset;
+        api->flush   = hal_h264e_vepu2_flush;
+        api->control = hal_h264e_vepu2_control;
         hw_cfg->hw_type = H264E_VPU;
         break;
     case RKVENC_MODE:
